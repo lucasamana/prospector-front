@@ -117,4 +117,3 @@ export interface LeadFilters {
   page_size?: number
 }
 
-export type ApiMode = "live" | "demo"

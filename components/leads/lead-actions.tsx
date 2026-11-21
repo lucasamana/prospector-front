@@ -1,5 +1,5 @@
 import type { ReactNode } from "react"
-import { Camera, Globe, MessageCircle, PencilLine, Phone } from "lucide-react"
+import { Globe, MessageCircle, PencilLine, Phone } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { buildWhatsAppHref } from "@/lib/format"
 import type { Lead } from "@/lib/types"
@@ -80,13 +80,23 @@ export function CallButton({ lead, size = "sm", showLabel = true }: { lead: Lead
   )
 }
 
+function InstagramIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className={className} aria-hidden>
+      <rect x="2.75" y="2.75" width="18.5" height="18.5" rx="5.25" />
+      <circle cx="12" cy="12" r="4.25" />
+      <circle cx="17.6" cy="6.4" r="1.15" fill="currentColor" stroke="none" />
+    </svg>
+  )
+}
+
 function SocialButtons({ lead, size }: { lead: Lead; size: Size }) {
   const cls = cn(iconSizes[size], "border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900")
   return (
     <>
       {lead.instagram && (
         <ActionLink href={lead.instagram} label={`Instagram de ${lead.nombre}`} external className={cls}>
-          <Camera className="size-4" aria-hidden />
+          <InstagramIcon className="size-4" />
         </ActionLink>
       )}
       {lead.website && (

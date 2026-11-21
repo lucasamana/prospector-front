@@ -1,7 +1,5 @@
 import { ApiError } from "./api-error"
-import * as demo from "./demo-store"
 import type {
-  ApiMode,
   BarrioAvance,
   CeldaMapa,
   ExtraerZonaPayload,
@@ -18,31 +16,24 @@ export { ApiError }
 const RAW_API_URL = process.env.NEXT_PUBLIC_API_URL || ""
 export const API_URL = RAW_API_URL.replace(/\/+$/, "")
 
-let modePromise: Promise<ApiMode> | null = null
-
-/** Probes the backend once; falls back to the in-memory demo when it is missing or unreachable. */
-export function resolveMode(): Promise<ApiMode> {
-  if (!modePromise) {
-    modePromise = (async () => {
-      if (!API_URL) return "demo"
-      try {
-        const res = await fetch(`${API_URL}/api/barrios`, { signal: AbortSignal.timeout(6000) })
-        return res.ok ? "live" : "demo"
-      } catch {
-        return "demo"
-      }
-    })()
-  }
-  return modePromise
-}
+export const MISSING_API_URL_MESSAGE = "Falta configurar NEXT_PUBLIC_API_URL con la URL del backend."
+export const UNREACHABLE_MESSAGE = "No se pudo conectar al backend."
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_URL}${path}`, {
-    ...init,
-    headers: { "Content-Type": "application/json", Accept: "application/json", ...init?.headers },
-  })
+  if (!API_URL) throw new ApiError(0, MISSING_API_URL_MESSAGE)
+
+  let res: Response
+  try {
+    res = await fetch(`${API_URL}${path}`, {
+      ...init,
+      headers: { "Content-Type": "application/json", Accept: "application/json", ...init?.headers },
+    })
+  } catch {
+    throw new ApiError(0, `${UNREACHABLE_MESSAGE} Verificá que esté corriendo en ${API_URL}.`)
+  }
+
   if (!res.ok) {
-    let message = `Error ${res.status}`
+    let message = `El backend respondió con error ${res.status}`
     try {
       const body = await res.json()
       if (typeof body?.detail === "string") message = body.detail
@@ -62,36 +53,15 @@ function toQuery(filters: LeadFilters) {
 }
 
 export const api = {
-  async listBarrios(): Promise<BarrioAvance[]> {
-    return (await resolveMode()) === "demo" ? demo.demoListBarrios() : request("/api/barrios")
-  },
-  async listCeldas(barrioId: number): Promise<CeldaMapa[]> {
-    return (await resolveMode()) === "demo"
-      ? demo.demoListCeldas(barrioId)
-      : request(`/api/barrios/${barrioId}/celdas`)
-  },
-  async extraerZona(h3: string, payload: ExtraerZonaPayload): Promise<ExtraerZonaResponse> {
-    return (await resolveMode()) === "demo"
-      ? demo.demoExtraerZona(h3, payload)
-      : request(`/api/zonas/${encodeURIComponent(h3)}/extraer`, { method: "POST", body: JSON.stringify(payload) })
-  },
-  async listLeads(filters: LeadFilters): Promise<LeadListResponse> {
-    const withDefaults = { page: 1, page_size: 20, ...filters }
-    return (await resolveMode()) === "demo"
-      ? demo.demoListLeads(withDefaults)
-      : request(`/api/leads${toQuery(withDefaults)}`)
-  },
-  async getLead(id: number): Promise<Lead> {
-    return (await resolveMode()) === "demo" ? demo.demoGetLead(id) : request(`/api/leads/${id}`)
-  },
-  async updateLead(id: number, payload: LeadUpdatePayload): Promise<Lead> {
-    return (await resolveMode()) === "demo"
-      ? demo.demoUpdateLead(id, payload)
-      : request(`/api/leads/${id}`, { method: "PATCH", body: JSON.stringify(payload) })
-  },
-  async createReferido(id: number, payload: ReferidoCreatePayload): Promise<Lead> {
-    return (await resolveMode()) === "demo"
-      ? demo.demoCreateReferido(id, payload)
-      : request(`/api/leads/${id}/referidos`, { method: "POST", body: JSON.stringify(payload) })
-  },
+  listBarrios: (): Promise<BarrioAvance[]> => request("/api/barrios"),
+  listCeldas: (barrioId: number): Promise<CeldaMapa[]> => request(`/api/barrios/${barrioId}/celdas`),
+  extraerZona: (h3: string, payload: ExtraerZonaPayload): Promise<ExtraerZonaResponse> =>
+    request(`/api/zonas/${encodeURIComponent(h3)}/extraer`, { method: "POST", body: JSON.stringify(payload) }),
+  listLeads: (filters: LeadFilters): Promise<LeadListResponse> =>
+    request(`/api/leads${toQuery({ page: 1, page_size: 20, ...filters })}`),
+  getLead: (id: number): Promise<Lead> => request(`/api/leads/${id}`),
+  updateLead: (id: number, payload: LeadUpdatePayload): Promise<Lead> =>
+    request(`/api/leads/${id}`, { method: "PATCH", body: JSON.stringify(payload) }),
+  createReferido: (id: number, payload: ReferidoCreatePayload): Promise<Lead> =>
+    request(`/api/leads/${id}/referidos`, { method: "POST", body: JSON.stringify(payload) }),
 }

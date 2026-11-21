@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import useSWR, { mutate } from "swr"
-import { api, resolveMode } from "./api"
+import { api } from "./api"
 
 export function useDebouncedValue<T>(value: T, delay = 400) {
   const [debounced, setDebounced] = useState(value)
@@ -11,10 +11,6 @@ export function useDebouncedValue<T>(value: T, delay = 400) {
     return () => clearTimeout(timer)
   }, [value, delay])
   return debounced
-}
-
-export function useApiMode() {
-  return useSWR("api-mode", resolveMode, { revalidateOnFocus: false, revalidateIfStale: false })
 }
 
 export function useBarrios(refreshInterval = 0) {
