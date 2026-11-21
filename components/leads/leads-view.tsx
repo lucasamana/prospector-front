@@ -48,7 +48,7 @@ export function LeadsView({ zonaH3, onClearZona }: LeadsViewProps) {
   const [pageState, setPageState] = useState({ key: filterKey, page: 1 })
   const page = pageState.key === filterKey ? pageState.page : 1
 
-  const { data, isLoading, error } = useSWR(
+  const { data, isLoading, error, mutate } = useSWR(
     ["leads", filterKey, page],
     () => api.listLeads({ ...baseFilters, page, page_size: PAGE_SIZE }),
     { keepPreviousData: true },
@@ -97,6 +97,7 @@ export function LeadsView({ zonaH3, onClearZona }: LeadsViewProps) {
           error={error as Error | undefined}
           onOpen={openLead}
           onClearFilters={hasActiveFilters ? clearAll : undefined}
+          onRetry={() => mutate()}
         />
         {data && data.total > 0 && (
           <LeadsPagination

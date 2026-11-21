@@ -2,6 +2,7 @@
 
 import { SearchX } from "lucide-react"
 import type { Lead } from "@/lib/types"
+import { ErrorState } from "@/components/error-state"
 import { EstadoBadge, ProximoContacto, Rating, ReferidoBadge, TelefonoBadge } from "./lead-badges"
 import { LeadActions } from "./lead-actions"
 
@@ -11,15 +12,12 @@ interface LeadsListProps {
   error: Error | undefined
   onOpen: (lead: Lead) => void
   onClearFilters?: () => void
+  onRetry: () => unknown
 }
 
-export function LeadsList({ leads, isLoading, error, onOpen, onClearFilters }: LeadsListProps) {
+export function LeadsList({ leads, isLoading, error, onOpen, onClearFilters, onRetry }: LeadsListProps) {
   if (error && !leads) {
-    return (
-      <div role="alert" className="rounded-2xl border border-rose-200 bg-rose-50 p-6 text-sm text-rose-700">
-        No pudimos cargar los leads: {error.message}
-      </div>
-    )
+    return <ErrorState title="No se pudieron cargar los leads" message={error.message} onRetry={onRetry} />
   }
   if (isLoading || !leads) return <ListSkeleton />
   if (leads.length === 0) return <EmptyState onClearFilters={onClearFilters} />

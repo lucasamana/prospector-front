@@ -1,9 +1,8 @@
 "use client"
 
 import { cn } from "@/lib/utils"
-import type { ApiMode } from "@/lib/types"
-
 export type AppTab = "leads" | "mapa"
+export type ConnectionStatus = "loading" | "online" | "offline"
 
 const TABS: { id: AppTab; label: string }[] = [
   { id: "leads", label: "CRM Leads" },
@@ -12,11 +11,11 @@ const TABS: { id: AppTab; label: string }[] = [
 
 interface AppHeaderProps {
   tab: AppTab
-  mode: ApiMode | undefined
+  status: ConnectionStatus
   onTabChange: (tab: AppTab) => void
 }
 
-export function AppHeader({ tab, mode, onTabChange }: AppHeaderProps) {
+export function AppHeader({ tab, status, onTabChange }: AppHeaderProps) {
   return (
     <header className="sticky top-0 z-[500] border-b border-zinc-200/80 bg-white/95 backdrop-blur">
       <div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 pt-3 md:h-16 md:flex-row md:items-center md:gap-10 md:px-6 md:pt-0">
@@ -26,7 +25,7 @@ export function AppHeader({ tab, mode, onTabChange }: AppHeaderProps) {
             <span className="text-[15px] font-semibold tracking-tight">Prospector Córdoba</span>
           </div>
           <div className="md:hidden">
-            <ConnectionPill mode={mode} />
+            <ConnectionPill status={status} />
           </div>
         </div>
 
@@ -58,7 +57,7 @@ export function AppHeader({ tab, mode, onTabChange }: AppHeaderProps) {
         </nav>
 
         <div className="ml-auto hidden md:block">
-          <ConnectionPill mode={mode} />
+          <ConnectionPill status={status} />
         </div>
       </div>
     </header>
@@ -76,11 +75,11 @@ function Logo() {
   )
 }
 
-function ConnectionPill({ mode }: { mode: ApiMode | undefined }) {
-  if (!mode) {
+function ConnectionPill({ status }: { status: ConnectionStatus }) {
+  if (status === "loading") {
     return <span className="inline-flex h-6 w-16 animate-pulse rounded-full bg-zinc-100" aria-label="Conectando" />
   }
-  if (mode === "live") {
+  if (status === "online") {
     return (
       <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700">
         <span className="relative flex size-1.5">
@@ -92,9 +91,9 @@ function ConnectionPill({ mode }: { mode: ApiMode | undefined }) {
     )
   }
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-zinc-50 px-2.5 py-0.5 text-xs font-medium text-zinc-600">
-      <span className="size-1.5 rounded-full bg-zinc-400" />
-      Demo
+    <span className="inline-flex items-center gap-1.5 rounded-full border border-rose-200 bg-rose-50 px-2.5 py-0.5 text-xs font-medium text-rose-700">
+      <span className="size-1.5 rounded-full bg-rose-500" />
+      Sin conexión
     </span>
   )
 }

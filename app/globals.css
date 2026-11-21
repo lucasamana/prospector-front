@@ -211,6 +211,3 @@
 .zona-hex {
   transition: fill-opacity 150ms ease;
 }
-.zona-tiles {
-  filter: grayscale(1) contrast(0.9) brightness(1.06);
-}

@@ -10,6 +10,7 @@ import type { CeldaMapa, EstadoCelda, ExtraerZonaPayload } from "@/lib/types"
 import { BarriosSidebar } from "./barrios-sidebar"
 import { MapLegend } from "./map-legend"
 import { CeldaPanel } from "./celda-panel"
+import { ErrorState } from "@/components/error-state"
 
 const ZonasMap = dynamic(() => import("@/components/zonas-map"), {
   ssr: false,
@@ -35,7 +36,7 @@ export function ZonasView({ onViewLeads }: { onViewLeads: (h3: string) => void }
   const barrioId = chosenBarrioId ?? barrios?.[0]?.id ?? null
 
   const celdasKey = barrioId !== null ? (["celdas", barrioId] as const) : null
-  const { data: celdas, mutate: mutateCeldas } = useSWR(celdasKey, ([, id]) => api.listCeldas(id), {
+  const { data: celdas, error: celdasError, mutate: mutateCeldas } = useSWR(celdasKey, ([, id]) => api.listCeldas(id), {
     refreshInterval: (latest) => (hasProcesando(latest) ? POLL_MS : 0),
     keepPreviousData: false,
   })
@@ -118,6 +119,16 @@ export function ZonasView({ onViewLeads }: { onViewLeads: (h3: string) => void }
           <MapLegend live={processing} barrioNombre={barrio?.nombre} />
           <div className="relative z-0 h-[480px] overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-50 md:h-[640px]">
             <ZonasMap barrioId={barrioId} celdas={celdas ?? []} selectedH3={selectedH3} onSelect={handleSelect} />
+            {celdasError && !celdas && (
+              <div className="absolute inset-0 z-[450] grid place-items-center bg-white/70 p-4 backdrop-blur-sm">
+                <ErrorState
+                  title="No se pudieron cargar las celdas"
+                  message={(celdasError as Error).message}
+                  onRetry={() => mutateCeldas()}
+                  className="w-full max-w-md shadow-lg"
+                />
+              </div>
+            )}
             {selectedCelda && (
               <div className="absolute top-4 right-4 z-[400] hidden w-80 rounded-2xl border border-zinc-200 bg-white/90 p-4 shadow-lg backdrop-blur-md md:block">
                 <CeldaPanel

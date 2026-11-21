@@ -7,6 +7,9 @@ import { ESTADO_CELDA_LABEL, formatDateTime } from "@/lib/format"
 import type { CeldaMapa, EstadoCelda, ExtraerZonaPayload } from "@/lib/types"
 import { NativeSelect, Spinner, fieldClass } from "@/components/form-controls"
 
+// A 200 m radius covers exactly one H3 resolution-9 cell.
+const H3_RES9_RADIUS_KM = 0.2
+
 const RUBROS = ["cafe", "barberia", "restaurante", "gimnasio", "kiosco", "ferreteria"]
 
 const ESTADO_STYLES: Record<EstadoCelda, string> = {
@@ -26,7 +29,6 @@ interface CeldaPanelProps {
 export function CeldaPanel({ celda, onClose, onExtraer, onViewLeads }: CeldaPanelProps) {
   const [rubro, setRubro] = useState("")
   const [maxResults, setMaxResults] = useState("40")
-  const [radius, setRadius] = useState("0.2")
   const [submitting, setSubmitting] = useState(false)
   const procesando = celda.estado === "procesando"
   const busy = procesando || submitting
@@ -34,7 +36,7 @@ export function CeldaPanel({ celda, onClose, onExtraer, onViewLeads }: CeldaPane
   async function submit() {
     setSubmitting(true)
     try {
-      await onExtraer(celda, { rubro: rubro.trim() || null, max_results: Number(maxResults), radius_km: Number(radius) })
+      await onExtraer(celda, { rubro: rubro.trim() || null, max_results: Number(maxResults), radius_km: H3_RES9_RADIUS_KM })
     } finally {
       setSubmitting(false)
     }
@@ -97,18 +99,11 @@ export function CeldaPanel({ celda, onClose, onExtraer, onViewLeads }: CeldaPane
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-2">
-        <NativeSelect label="Máx. resultados" visibleLabel value={maxResults} onChange={setMaxResults}>
-          <option value="20">20</option>
-          <option value="40">40</option>
-          <option value="80">80</option>
-        </NativeSelect>
-        <NativeSelect label="Radio (km)" visibleLabel value={radius} onChange={setRadius}>
-          <option value="0.15">0.15</option>
-          <option value="0.2">0.2</option>
-          <option value="0.3">0.3</option>
-        </NativeSelect>
-      </div>
+      <NativeSelect label="Máx. resultados" visibleLabel value={maxResults} onChange={setMaxResults}>
+        <option value="20">20</option>
+        <option value="40">40</option>
+        <option value="80">80</option>
+      </NativeSelect>
 
       <div className="flex flex-col gap-2">
         <button

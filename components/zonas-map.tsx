@@ -7,6 +7,10 @@ import { ESTADO_CELDA_LABEL } from "@/lib/format"
 import type { CeldaMapa, EstadoCelda } from "@/lib/types"
 
 const CORDOBA: L.LatLngTuple = [-31.4201, -64.1888]
+const CORDOBA_BOUNDS: L.LatLngBoundsExpression = [
+  [-31.54, -64.33],
+  [-31.3, -64.05],
+]
 
 const STYLES: Record<EstadoCelda, L.PathOptions> = {
   pendiente: { color: "#94a3b8", weight: 1, opacity: 0.7, fillColor: "#cbd5e1", fillOpacity: 0.12 },
@@ -40,11 +44,22 @@ export default function ZonasMap({ barrioId, celdas, selectedH3, onSelect }: Zon
 
   useEffect(() => {
     if (!containerRef.current) return
-    const map = L.map(containerRef.current, { center: CORDOBA, zoom: 14, zoomControl: true, scrollWheelZoom: true })
-    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      maxZoom: 19,
-      className: "zona-tiles",
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    const map = L.map(containerRef.current, {
+      center: CORDOBA,
+      zoom: 14,
+      minZoom: 12,
+      maxZoom: 20,
+      maxBounds: CORDOBA_BOUNDS,
+      maxBoundsViscosity: 0.9,
+      zoomControl: true,
+      scrollWheelZoom: true,
+    })
+    L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
+      subdomains: "abcd",
+      maxZoom: 20,
+      bounds: CORDOBA_BOUNDS,
+      attribution:
+        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
     }).addTo(map)
     const group = L.featureGroup().addTo(map)
     mapRef.current = map

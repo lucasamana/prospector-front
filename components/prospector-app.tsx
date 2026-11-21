@@ -2,17 +2,17 @@
 
 import { useCallback } from "react"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
-import { AppHeader, type AppTab } from "@/components/app-header"
-import { DemoBanner } from "@/components/demo-banner"
+import { AppHeader, type AppTab, type ConnectionStatus } from "@/components/app-header"
+import { ErrorState } from "@/components/error-state"
 import { LeadsView } from "@/components/leads/leads-view"
 import { ZonasView } from "@/components/zonas/zonas-view"
-import { useApiMode } from "@/lib/hooks"
+import { revalidateLeadsAndBarrios, useBarrios } from "@/lib/hooks"
 
 export function ProspectorApp() {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
-  const { data: mode } = useApiMode()
+  const { data: barrios, error, isLoading } = useBarrios()
 
   const tab: AppTab = searchParams.get("tab") === "mapa" ? "mapa" : "leads"
   const zonaH3 = searchParams.get("zona_h3")
@@ -30,16 +30,20 @@ export function ProspectorApp() {
     [pathname, router, searchParams],
   )
 
+  const status: ConnectionStatus = error ? "offline" : barrios ? "online" : "loading"
+  const offline = error && !barrios
+
   return (
     <div className="min-h-dvh bg-zinc-50 text-zinc-950">
-      {mode === "demo" && <DemoBanner />}
       <AppHeader
         tab={tab}
-        mode={mode}
+        status={isLoading && !barrios ? "loading" : status}
         onTabChange={(next) => updateParams({ tab: next === "leads" ? null : next })}
       />
       <main className="mx-auto max-w-7xl px-4 py-5 md:px-6 md:py-8">
-        {tab === "leads" ? (
+        {offline ? (
+          <ErrorState message={(error as Error).message} onRetry={revalidateLeadsAndBarrios} className="py-20" />
+        ) : tab === "leads" ? (
           <LeadsView zonaH3={zonaH3} onClearZona={() => updateParams({ zona_h3: null })} />
         ) : (
           <ZonasView onViewLeads={(h3) => updateParams({ tab: null, zona_h3: h3 })} />
