@@ -77,12 +77,11 @@ export default function ZonasMap({ barrioId, celdas, selectedH3, addMode, onSele
       scrollWheelZoom: true,
     })
 
-    L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
-      subdomains: "abcd",
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxNativeZoom: 19,
       maxZoom: 20,
       bounds: CORDOBA_BOUNDS,
-      attribution:
-        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
     }).addTo(map)
 
     const group = L.featureGroup().addTo(map)

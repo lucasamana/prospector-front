@@ -66,7 +66,7 @@ export function MapLegend({ live, barrioNombre, addMode, adding, onToggleAddMode
             ) : (
               <Plus className="size-3.5" aria-hidden />
             )}
-            {addMode ? "Cancelar" : "+ Agregar zona"}
+            {addMode ? "Cancelar" : "Agregar zona"}
           </button>
         </div>
       </div>

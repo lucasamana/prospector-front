@@ -215,3 +215,6 @@
 .leaflet-container.map-add-mode .leaflet-interactive {
   cursor: crosshair !important;
 }
+.leaflet-tile-pane {
+  filter: grayscale(100%) brightness(1.04) contrast(0.92);
+}
