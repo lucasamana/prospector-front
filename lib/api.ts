@@ -1,5 +1,6 @@
 import { ApiError } from "./api-error"
 import type {
+  AgregarZonaPayload,
   BarrioAvance,
   CeldaMapa,
   ExtraerZonaPayload,
@@ -55,6 +56,8 @@ function toQuery(filters: LeadFilters) {
 export const api = {
   listBarrios: (): Promise<BarrioAvance[]> => request("/api/barrios"),
   listCeldas: (barrioId: number): Promise<CeldaMapa[]> => request(`/api/barrios/${barrioId}/celdas`),
+  agregarZona: (payload: AgregarZonaPayload): Promise<CeldaMapa> =>
+    request("/api/zonas/agregar", { method: "POST", body: JSON.stringify(payload) }),
   extraerZona: (h3: string, payload: ExtraerZonaPayload): Promise<ExtraerZonaResponse> =>
     request(`/api/zonas/${encodeURIComponent(h3)}/extraer`, { method: "POST", body: JSON.stringify(payload) }),
   listLeads: (filters: LeadFilters): Promise<LeadListResponse> =>

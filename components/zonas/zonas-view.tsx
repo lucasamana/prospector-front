@@ -31,6 +31,8 @@ export function ZonasView({ onViewLeads }: { onViewLeads: (h3: string) => void }
   const [chosenBarrioId, setChosenBarrioId] = useState<number | null>(null)
   const [selectedH3, setSelectedH3] = useState<string | null>(null)
   const [polling, setPolling] = useState(false)
+  const [addMode, setAddMode] = useState(false)
+  const [addingZona, setAddingZona] = useState(false)
 
   const { data: barrios, isLoading: loadingBarrios } = useBarrios(polling ? POLL_MS : 0)
   const barrioId = chosenBarrioId ?? barrios?.[0]?.id ?? null
@@ -46,7 +48,19 @@ export function ZonasView({ onViewLeads }: { onViewLeads: (h3: string) => void }
     setPolling(processing)
   }, [processing])
 
-  const prevRef = useRef<{ barrioId: number | null; estados: Map<string, EstadoCelda> }>({ barrioId: null, estados: new Map() })
+  useEffect(() => {
+    if (!addMode) return
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setAddMode(false)
+    }
+    window.addEventListener("keydown", onKeyDown)
+    return () => window.removeEventListener("keydown", onKeyDown)
+  }, [addMode])
+
+  const prevRef = useRef<{ barrioId: number | null; estados: Map<string, EstadoCelda> }>({
+    barrioId: null,
+    estados: new Map(),
+  })
   useEffect(() => {
     if (!celdas) return
     const prev = prevRef.current
@@ -76,9 +90,39 @@ export function ZonasView({ onViewLeads }: { onViewLeads: (h3: string) => void }
   const selectBarrio = (id: number) => {
     setChosenBarrioId(id)
     setSelectedH3(null)
+    setAddMode(false)
   }
 
   const handleSelect = useCallback((h3: string) => setSelectedH3(h3), [])
+
+  const handleMapClick = useCallback(
+    async (lat: number, lng: number) => {
+      if (addingZona) return
+      setAddingZona(true)
+      try {
+        const nueva = await api.agregarZona({ lat, lng, barrio_id: barrioId })
+        if (barrioId === null) setChosenBarrioId(nueva.barrio_id)
+        await Promise.all([
+          mutateCeldas((current) => (current ? [...current, nueva] : [nueva]), { revalidate: true }),
+          revalidateLeadsAndBarrios(),
+        ])
+        setSelectedH3(nueva.h3_index)
+        setAddMode(false)
+        toast.success("Zona agregada", { description: `Hexágono ${nueva.h3_index} sumado al mapa.` })
+      } catch (err) {
+        if (err instanceof ApiError && err.status === 409) {
+          toast.warning("Esta celda ya existe en el mapa")
+        } else if (err instanceof ApiError && err.status === 400) {
+          toast.error("Solo podés agregar zonas dentro de Córdoba Capital")
+        } else {
+          toast.error("No se pudo agregar la zona", { description: (err as Error).message })
+        }
+      } finally {
+        setAddingZona(false)
+      }
+    },
+    [addingZona, barrioId, mutateCeldas],
+  )
 
   async function extraer(celda: CeldaMapa, payload: ExtraerZonaPayload) {
     const markProcesando = (list?: CeldaMapa[]) =>
@@ -116,9 +160,22 @@ export function ZonasView({ onViewLeads }: { onViewLeads: (h3: string) => void }
         <BarriosSidebar barrios={barrios} loading={loadingBarrios} selectedId={barrioId} onSelect={selectBarrio} />
 
         <div className="flex min-w-0 flex-col gap-3">
-          <MapLegend live={processing} barrioNombre={barrio?.nombre} />
+          <MapLegend
+            live={processing}
+            barrioNombre={barrio?.nombre}
+            addMode={addMode}
+            adding={addingZona}
+            onToggleAddMode={() => setAddMode((v) => !v)}
+          />
           <div className="relative z-0 h-[480px] overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-50 md:h-[640px]">
-            <ZonasMap barrioId={barrioId} celdas={celdas ?? []} selectedH3={selectedH3} onSelect={handleSelect} />
+            <ZonasMap
+              barrioId={barrioId}
+              celdas={celdas ?? []}
+              selectedH3={selectedH3}
+              addMode={addMode}
+              onSelect={handleSelect}
+              onMapClick={handleMapClick}
+            />
             {celdasError && !celdas && (
               <div className="absolute inset-0 z-[450] grid place-items-center bg-white/70 p-4 backdrop-blur-sm">
                 <ErrorState
@@ -130,7 +187,7 @@ export function ZonasView({ onViewLeads }: { onViewLeads: (h3: string) => void }
               </div>
             )}
             {selectedCelda && (
-              <div className="absolute top-4 right-4 z-[400] hidden w-80 rounded-2xl border border-zinc-200 bg-white/90 p-4 shadow-lg backdrop-blur-md md:block">
+              <div className="absolute top-4 right-4 z-[400] hidden max-h-[calc(100%-2rem)] w-80 overflow-y-auto rounded-2xl border border-zinc-200 bg-white/95 p-4 shadow-lg backdrop-blur-md md:block">
                 <CeldaPanel
                   key={selectedCelda.h3_index}
                   celda={selectedCelda}

@@ -35,6 +35,15 @@ export interface CeldaMapa {
   estado: EstadoCelda
   ultimo_scraping: string | null
   leads_count: number
+  rubros_scrapeados: string[]
+  porcentaje_escaneo: number
+  saturada: boolean
+}
+
+export interface AgregarZonaPayload {
+  lat: number
+  lng: number
+  barrio_id: number | null
 }
 
 export interface Lead {
@@ -116,4 +125,3 @@ export interface LeadFilters {
   page?: number
   page_size?: number
 }
-

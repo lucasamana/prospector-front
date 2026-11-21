@@ -211,3 +211,7 @@
 .zona-hex {
   transition: fill-opacity 150ms ease;
 }
+.leaflet-container.map-add-mode,
+.leaflet-container.map-add-mode .leaflet-interactive {
+  cursor: crosshair !important;
+}
