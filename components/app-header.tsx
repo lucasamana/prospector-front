@@ -1,6 +1,9 @@
 "use client"
 
+import { useRouter } from "next/navigation"
+import { LogOut } from "lucide-react"
 import { cn } from "@/lib/utils"
+
 export type AppTab = "leads" | "mapa"
 export type ConnectionStatus = "loading" | "online" | "offline"
 
@@ -24,8 +27,9 @@ export function AppHeader({ tab, status, onTabChange }: AppHeaderProps) {
             <Logo />
             <span className="text-[15px] font-semibold tracking-tight">Prospector Córdoba</span>
           </div>
-          <div className="md:hidden">
+          <div className="flex items-center gap-2 md:hidden">
             <ConnectionPill status={status} />
+            <LogoutButton />
           </div>
         </div>
 
@@ -56,8 +60,9 @@ export function AppHeader({ tab, status, onTabChange }: AppHeaderProps) {
           })}
         </nav>
 
-        <div className="ml-auto hidden md:block">
+        <div className="ml-auto hidden items-center gap-2 md:flex">
           <ConnectionPill status={status} />
+          <LogoutButton />
         </div>
       </div>
     </header>
@@ -95,5 +100,27 @@ function ConnectionPill({ status }: { status: ConnectionStatus }) {
       <span className="size-1.5 rounded-full bg-rose-500" />
       Sin conexión
     </span>
+  )
+}
+
+function LogoutButton() {
+  const router = useRouter()
+
+  async function handleLogout() {
+    await fetch("/api/auth/logout", { method: "POST" })
+    router.refresh()
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={handleLogout}
+      aria-label="Cerrar sesión"
+      title="Cerrar sesión"
+      className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2.5 text-xs font-medium text-zinc-600 transition-colors hover:bg-zinc-50 hover:text-zinc-950"
+    >
+      <LogOut className="size-3.5" aria-hidden />
+      <span className="hidden sm:inline">Salir</span>
+    </button>
   )
 }
